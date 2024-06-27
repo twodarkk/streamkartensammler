@@ -1,127 +1,128 @@
+<!DOCTYPE html>
 <html lang="de">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Streamkarten Sammler</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamkarten Sammler</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
 </head>
-
 <body onload="loadData()">
-  <header>
-    <h1>Streamkarten Sammler</h1>
-    <nav>
-      <ul>
-        <li><a href="#" class="menu-link" onclick="showSection('home', this)">Startseite</a></li>
-        <li><a href="#" class="menu-link restricted-link" id="menu-my-cards" onclick="showSection('my-cards', this)">Meine Karten</a></li>
-        <li><a href="#" class="menu-link restricted-link" onclick="showSection('account', this)">Mein Account</a></li>
-        <li><a href="#" class="menu-link restricted-link" onclick="showSection('collect', this)">Karten sammeln</a></li>
-        <li><a href="#" class="menu-link" id="login-logout" onclick="toggleLoginLogout(this)">Login</a></li>
-      </ul>
-    </nav>
-  </header>
-  <div class="container">
-    <section id="home" class="active">
-      <div id="main">
-        <h2>Willkommen zum Streamkarten-Sammler</h2>
-        <p>Der Streamkarten-Sammler ist eine spannende Plattform, auf der du Karten sammeln kannst, während du deine Lieblingsstreams auf YouTube und Twitch schaust. Je länger du zuschaust, desto mehr Energie sammelst du, die du dann gegen verschiedene Karten eintauschen kannst. Jede Karte hat unterschiedliche Stufen, die du durch das Sammeln von Karten niedrigerer Stufen verbessern kannst.</p>
-        <p>Beginne deine Sammlung noch heute und entdecke die Vielfalt der Karten, die du sammeln kannst. Melde dich an, um deinen Fortschritt zu speichern und deine Sammlung zu erweitern!</p>
-      </div>
-    </section>
-    <section id="my-cards" class="restricted">
-      <div id="main">
-        <h3>Deine Karten</h3>
-        <div id="card-count">
-          <!-- Kartenanzahl wird hier angezeigt -->
-        </div>
-        <div id="card-container">
-          <!-- Karten werden hier hinzugefügt -->
-        </div>
-      </div>
-    </section>
-    <section id="account" class="restricted">
-      <div id="main">
-        <h3>Mein Account</h3>
-        <p>Benutzername: <span id="username">TwoDarkk</span></p>
-        <p>E-Mail: <span id="email">twodarkk@example.com</span></p>
-        <h4>Energie: <span id="energy-account">0</span></h4>
-        <!-- Weitere Account-Informationen -->
-      </div>
-    </section>
-    <section id="collect" class="restricted">
-      <div id="main">
-        <h3>Karten sammeln</h3>
-        <div class="energy-container">
-          <p>Gesammelte Energie: <span id="energy">0</span></p>
-          <button onclick="claimEnergy()">100 Energie sammeln</button>
-        </div>
-        <div class="button-row">
-          <div class="button-container">
-            <button onclick="claimCard(1)">Stufe 1 Karte holen (30 Energie)</button>
-            <small>Anzahl: <span id="count-1">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(2)">Stufe 2 Karte holen (5x Stufe 1 Karten)</button>
-            <small>Anzahl: <span id="count-2">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(3)">Stufe 3 Karte holen (5x Stufe 2 Karten)</button>
-            <small>Anzahl: <span id="count-3">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(4)">Stufe 4 Karte holen (5x Stufe 3 Karten)</button>
-            <small>Anzahl: <span id="count-4">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(5)">Stufe 5 Karte holen (5x Stufe 4 Karten)</button>
-            <small>Anzahl: <span id="count-5">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(6)">Stufe 6 Karte holen (5x Stufe 5 Karten)</button>
-            <small>Anzahl: <span id="count-6">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(7)">Stufe 7 Karte holen (5x Stufe 6 Karten)</button>
-            <small>Anzahl: <span id="count-7">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(8)">Stufe 8 Karte holen (5x Stufe 7 Karten)</button>
-            <small>Anzahl: <span id="count-8">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(9)">Stufe 9 Karte holen (5x Stufe 8 Karten)</button>
-            <small>Anzahl: <span id="count-9">0</span></small>
-          </div>
-          <div class="button-container">
-            <button onclick="claimCard(10)">Stufe 10 Karte holen (5x Stufe 9 Karten)</button>
-            <small>Anzahl: <span id="count-10">0</span></small>
-          </div>
-        </div>
-        <h4>Letzte 5 Karten</h4>
-        <div id="last-5-cards">
-          <!-- Letzte 5 Karten werden hier hinzugefügt -->
-        </div>
-      </div>
-    </section>
-    <section id="login">
-      <div id="main">
-        <h3>Login</h3>
-        <form id="loginForm" onsubmit="login(event)">
-          <label for="username">Benutzername:</label>
-          <input type="text" id="username" name="username" required>
-          <label for="password">Passwort:</label>
-          <input type="password" id="password" name="password" required>
-          <button type="submit">Login</button>
-        </form>
-      </div>
-    </section>
-  </div>
-  <footer>
-    <p>&copy; 2024 Streamkarten Sammler</p>
-  </footer>
-  <button onclick="scrollToTop()" id="scrollTopBtn" title="Nach oben scrollen">↑</button>
-  <div id="notification" class="notification"></div> <!-- Notification Element -->
-  <script src="scripts.js"></script>
+    <header>
+        <h1>Streamkarten Sammler</h1>
+        <nav>
+            <ul>
+                <li><a href="#" class="menu-link" onclick="showSection('home', this)">Startseite</a></li>
+                <li><a href="#" class="menu-link restricted-link" id="menu-my-cards" onclick="showSection('my-cards', this)">Meine Karten</a></li>
+                <li><a href="#" class="menu-link restricted-link" onclick="showSection('account', this)">Mein Account</a></li>
+                <li><a href="#" class="menu-link restricted-link" onclick="showSection('collect', this)">Karten sammeln</a></li>
+                <li><a href="#" class="menu-link" id="login-logout" onclick="toggleLoginLogout(this)">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        <section id="home" class="active">
+            <div id="main">
+                <h2>Willkommen zum Streamkarten-Sammler</h2>
+                <p>Der Streamkarten-Sammler ist eine spannende Plattform, auf der du Karten sammeln kannst, während du deine Lieblingsstreams auf YouTube und Twitch schaust. Je länger du zuschaust, desto mehr Energie sammelst du, die du dann gegen verschiedene Karten eintauschen kannst. Jede Karte hat unterschiedliche Stufen, die du durch das Sammeln von Karten niedrigerer Stufen verbessern kannst.</p>
+                <p>Beginne deine Sammlung noch heute und entdecke die Vielfalt der Karten, die du sammeln kannst. Melde dich an, um deinen Fortschritt zu speichern und deine Sammlung zu erweitern!</p>
+            </div>
+        </section>
+        <section id="my-cards" class="restricted">
+            <div id="main">
+                <h3>Deine Karten</h3>
+                <div id="card-count">
+                    <!-- Kartenanzahl wird hier angezeigt -->
+                </div>
+                <div id="card-container">
+                    <!-- Karten werden hier hinzugefügt -->
+                </div>
+            </div>
+        </section>
+        <section id="account" class="restricted">
+            <div id="main">
+                <h3>Mein Account</h3>
+                <p>Benutzername: <span id="username">TwoDarkk</span></p>
+                <p>E-Mail: <span id="email">twodarkk@example.com</span></p>
+                <h4>Energie: <span id="energy-account">0</span></h4>
+                <!-- Weitere Account-Informationen -->
+            </div>
+        </section>
+        <section id="collect" class="restricted">
+            <div id="main">
+                <h3>Karten sammeln</h3>
+                <div class="energy-container">
+                    <p>Gesammelte Energie: <span id="energy">0</span></p>
+                    <button onclick="claimEnergy()">100 Energie sammeln</button>
+                </div>
+                <div class="button-row">
+                    <div class="button-container">
+                        <button onclick="claimCard(1)">Stufe 1 Karte holen (30 Energie)</button>
+                        <small>Anzahl: <span id="count-1">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(2)">Stufe 2 Karte holen (5x Stufe 1 Karten)</button>
+                        <small>Anzahl: <span id="count-2">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(3)">Stufe 3 Karte holen (5x Stufe 2 Karten)</button>
+                        <small>Anzahl: <span id="count-3">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(4)">Stufe 4 Karte holen (5x Stufe 3 Karten)</button>
+                        <small>Anzahl: <span id="count-4">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(5)">Stufe 5 Karte holen (5x Stufe 4 Karten)</button>
+                        <small>Anzahl: <span id="count-5">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(6)">Stufe 6 Karte holen (5x Stufe 5 Karten)</button>
+                        <small>Anzahl: <span id="count-6">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(7)">Stufe 7 Karte holen (5x Stufe 6 Karten)</button>
+                        <small>Anzahl: <span id="count-7">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(8)">Stufe 8 Karte holen (5x Stufe 7 Karten)</button>
+                        <small>Anzahl: <span id="count-8">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(9)">Stufe 9 Karte holen (5x Stufe 8 Karten)</button>
+                        <small>Anzahl: <span id="count-9">0</span></small>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="claimCard(10)">Stufe 10 Karte holen (5x Stufe 9 Karten)</button>
+                        <small>Anzahl: <span id="count-10">0</span></small>
+                    </div>
+                </div>
+                <h4>Letzte 5 Karten</h4>
+                <div id="last-5-cards">
+                    <!-- Letzte 5 Karten werden hier hinzugefügt -->
+                </div>
+            </div>
+        </section>
+        <section id="login">
+            <div id="main">
+                <h3>Login</h3>
+                <form id="loginForm" onsubmit="login(event)">
+                    <label for="username">Benutzername:</label>
+                    <input type="text" id="username" name="username" required>
+                    <label for="password">Passwort:</label>
+                    <input type="password" id="password" name="password" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        </section>
+    </div>
+    <footer>
+        <p>&copy; 2024 Streamkarten Sammler</p>
+    </footer>
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Nach oben scrollen">↑</button>
+    <div id="notification" class="notification"></div> <!-- Notification Element -->
+    <script src="scripts.js"></script>
 </body>
-
 </html>
