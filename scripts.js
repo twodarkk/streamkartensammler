@@ -1,276 +1,281 @@
-const auth = firebase.auth();
-const db = firebase.database();
-
-let userId = null;
-let energy = 0;
-let cards = Array(11).fill(0);
-let loggedIn = false;
-
-const energyDisplay = document.getElementById('energy');
-const energyAccountDisplay = document.getElementById('energy-account');
-const cardContainer = document.getElementById('card-container');
-const cardCountContainer = document.getElementById('card-count');
-const last5CardsContainer = document.getElementById('last-5-cards');
-const last5Cards = [];
-let selectedCardId = null;
-
-function showNotification(message) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.className = "notification show";
-    setTimeout(() => {
-        notification.className = notification.className.replace("show", "");
-    }, 3000);
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
 }
 
-function addEnergy() {
-    energy += 100;
-    updateDisplay();
-    saveUserData();
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
 }
 
-function claimEnergy() {
-    addEnergy();
-    showNotification('100 Energie erfolgreich gesammelt!');
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-function claimCard(level) {
-    if (level === 1 && energy >= 30) {
-        energy -= 30;
-        cards[1]++;
-        updateDisplay();
-        addCardToContainer(1);
-        addCardToLast5(1);
-        showNotification('Stufe 1 Karte erfolgreich erhalten!');
-    } else if (level > 1 && cards[level - 1] >= 5) {
-        cards[level - 1] -= 5;
-        cards[level]++;
-        updateDisplay();
-        addCardToContainer(level);
-        addCardToLast5(level);
-        showNotification(`Stufe ${level} Karte erfolgreich erhalten!`);
-    } else {
-        showNotification('Nicht genügend Ressourcen!');
+nav ul li {
+    flex: 1 1 auto;
+    text-align: center;
+}
+
+nav ul li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+nav ul li a:hover, nav ul li a.active {
+    background-color: #111;
+}
+
+.container {
+    width: 100%;
+    margin: auto;
+    overflow: hidden;
+    padding-top: 60px; /* Adjusted for desktop */
+}
+
+#main {
+    padding: 20px;
+    background: #fff;
+    margin: 20px 0;
+}
+
+.card {
+    width: 100%;
+    max-width: 150px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #fff;
+    margin: 10px auto;
+    text-align: center;
+    display: inline-block;
+}
+
+.card img {
+    width: 100%;
+}
+
+.card .title {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.card .level {
+    font-size: 12px;
+    color: #888;
+}
+
+.card .energy {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.card .count {
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+button {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    display: block; /* Ensure buttons take full width on mobile */
+}
+
+button:hover {
+    background-color: #555;
+}
+
+section {
+    display: none;
+    padding-top: 60px; /* Additional padding for all sections */
+    padding-bottom: 60px; /* Additional padding for bottom */
+}
+
+section.active {
+    display: block;
+}
+
+.restricted {
+    display: none;
+}
+
+.restricted.active {
+    display: block;
+}
+
+.restricted-link {
+    display: none;
+}
+
+#scrollTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+#scrollTopBtn:hover {
+    background-color: #555;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+}
+
+input {
+    margin-bottom: 10px;
+    padding: 8px;
+    font-size: 16px;
+}
+
+/* Media Queries for mobile responsiveness */
+@media (max-width: 600px) {
+    nav ul {
+        flex-direction: column;
     }
-    saveUserData();
-}
 
-function updateDisplay() {
-    energyDisplay.textContent = energy;
-    energyAccountDisplay.textContent = energy;
-
-    for (let i = 1; i <= 10; i++) {
-        document.getElementById(`count-${i}`).textContent = cards[i];
-    }
-}
-
-function addCardToContainer(level) {
-    const cardId = `card-${Date.now()}`; // Generate a unique ID
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.id = cardId;
-    card.dataset.level = level;
-    card.innerHTML = `
-        <img src="https://via.placeholder.com/150" alt="Karte Stufe ${level}">
-        <div class="title">Karte Stufe ${level}</div>
-        <div class="level">Stufe ${level}</div>
-        <div class="energy">Benötigte Energie: ${level === 1 ? 30 : `5x Stufe ${level - 1} Karten`}</div>
-    `;
-    cardContainer.appendChild(card);
-    sortCards();
-}
-
-function addCardToLast5(level) {
-    const card = {
-        level: level,
-        timestamp: new Date().toLocaleString(),
-        id: `card-${Date.now()}`
-    };
-    last5Cards.unshift(card);
-    if (last5Cards.length > 5) {
-        last5Cards.pop();
-    }
-    renderLast5Cards();
-}
-
-function renderLast5Cards() {
-    last5CardsContainer.innerHTML = '';
-    last5Cards.forEach((card) => {
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card';
-        cardElement.id = card.id;
-        cardElement.innerHTML = `
-            <img src="https://via.placeholder.com/150" alt="Karte Stufe ${card.level}">
-            <div class="title">Karte Stufe ${card.level}</div>
-            <div class="level">Stufe ${card.level}</div>
-            <div class="timestamp">Erhalten: ${card.timestamp}</div>
-        `;
-        cardElement.addEventListener('click', () => {
-            selectedCardId = card.id;
-            showSection('my-cards', document.querySelector('#menu-my-cards'));
-            scrollToCard(card.id);
-        });
-        last5CardsContainer.appendChild(cardElement);
-    });
-}
-
-function sortCards() {
-    const cardsArray = Array.from(cardContainer.children);
-    cardsArray.sort((a, b) => a.dataset.level - b.dataset.level);
-    cardContainer.innerHTML = '';
-    cardsArray.forEach(card => cardContainer.appendChild(card));
-}
-
-function scrollToCard(cardId) {
-    const cardElement = document.getElementById(cardId);
-    if (cardElement) {
-        cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        cardElement.classList.add('blink');
-        setTimeout(() => cardElement.classList.remove('blink'), 1500);
-    }
-}
-
-function showSection(sectionId, menuLink) {
-    if (sectionId !== 'login' && sectionId !== 'home' && !loggedIn) {
-        showNotification('Bitte logge dich zuerst ein.');
-        return;
+    nav ul li {
+        flex: none;
     }
 
-    const sections = document.querySelectorAll('section');
-    sections.forEach(section => {
-        section.classList.remove('active');
-    });
-    document.getElementById(sectionId).classList.add('active');
-
-    const menuLinks = document.querySelectorAll('.menu-link');
-    menuLinks.forEach(link => {
-        link.classList.remove('active');
-    });
-    if (menuLink) {
-        menuLink.classList.add('active');
+    header {
+        padding: 20px 0; /* Erhöhte Padding für den Header auf mobilen Geräten */
     }
 
-    if (sectionId === 'my-cards' && selectedCardId) {
-        scrollToCard(selectedCardId);
-        selectedCardId = null;
+    .container {
+        padding-top: 180px; /* Anpassung für mobilen Header */
     }
-}
 
-function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-window.onscroll = function() {
-    const scrollTopBtn = document.getElementById('scrollTopBtn');
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-        scrollTopBtn.style.display = 'block';
-    } else {
-        scrollTopBtn.style.display = 'none';
+    section {
+        padding-top: 180px; /* Additional padding for all sections on mobile */
     }
-};
 
-function login(event) {
-    event.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    .card {
+        max-width: 100%;
+    }
 
-    auth.signInWithEmailAndPassword(username, password)
-    .then((userCredential) => {
-        const user = userCredential.user;
-        userId = user.uid;
-        showNotification('Login erfolgreich!');
-        loggedIn = true;
-        document.querySelectorAll('.restricted').forEach(section => {
-            section.classList.add('active');
-        });
-        document.querySelectorAll('.restricted-link').forEach(link => {
-            link.style.display = 'block';
-        });
-        document.getElementById('login-logout').textContent = 'Logout';
-        loadProfile();
-    })
-    .catch((error) => {
-        showNotification('Ungültiger Benutzername oder Passwort.');
-        console.error('Error:', error);
-    });
-}
-
-function register(event) {
-    event.preventDefault();
-    const username = document.getElementById('reg-username').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-
-    auth.createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-        const user = userCredential.user;
-        userId = user.uid;
-        db.ref('users/' + userId).set({
-            username: username,
-            email: email,
-            energy: 0,
-            cards: Array(11).fill(0)
-        });
-        showNotification('Registrierung erfolgreich! Bitte einloggen.');
-        showSection('login', document.querySelector('.menu-link[href="#login"]'));
-    })
-    .catch((error) => {
-        showNotification('Registrierung fehlgeschlagen.');
-        console.error('Error:', error);
-    });
-}
-
-function loadProfile() {
-    const user = auth.currentUser;
-    if (user) {
-        userId = user.uid;
-        db.ref('users/' + userId).once('value').then((snapshot) => {
-            const userData = snapshot.val();
-            document.getElementById('username').textContent = userData.username;
-            document.getElementById('email').textContent = userData.email;
-            energy = userData.energy;
-            cards = userData.cards;
-            updateDisplay();
-        }).catch((error) => {
-            console.error('Error:', error);
-        });
+    button {
+        width: 100%;
+        box-sizing: border-box;
+        display: block;
     }
 }
 
-function saveUserData() {
-    if (userId) {
-        db.ref('users/' + userId).update({
-            energy: energy,
-            cards: cards
-        }).then(() => {
-            showNotification('Benutzerdaten erfolgreich gespeichert.');
-        }).catch((error) => {
-            showNotification('Speichern der Benutzerdaten fehlgeschlagen.');
-            console.error('Error:', error);
-        });
+/* Buttons in a row for desktop view */
+@media (min-width: 601px) {
+    .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+
+    .button-row .button-container {
+        flex: 1 1 auto;
+        max-width: 200px; /* Adjust as needed */
+        margin: 10px;
+        text-align: center;
+    }
+
+    .energy-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .energy-container p {
+        margin: 0;
+        margin-right: 10px;
+    }
+
+    .energy-container button {
+        margin: 0;
     }
 }
 
-function toggleLoginLogout(menuLink) {
-    if (loggedIn) {
-        auth.signOut().then(() => {
-            showNotification('Logout erfolgreich.');
-            loggedIn = false;
-            document.querySelectorAll('.restricted').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.restricted-link').forEach(link => {
-                link.style.display = 'none';
-            });
-            menuLink.textContent = 'Login';
-            showSection('home', document.querySelector('.menu-link[href="#home"]'));
-        }).catch((error) => {
-            showNotification('Logout fehlgeschlagen.');
-            console.error('Error:', error);
-        });
-    } else {
-        showSection('login', menuLink);
-    }
+.blink {
+    animation: blink 0.5s 3;
 }
 
-setInterval(addEnergy, 300000); // Alle 5 Minuten 10 Energie hinzufügen
+@keyframes blink {
+    0% { background-color: yellow; }
+    50% { background-color: white; }
+    100% { background-color: yellow; }
+}
+
+/* Notification styles */
+.notification {
+    visibility: hidden;
+    min-width: 300px;
+    margin-left: -150px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+    font-size: 17px;
+}
+
+.notification.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;} 
+    to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadeout {
+    from {bottom: 30px; opacity: 1;} 
+    to {bottom: 0; opacity: 0;}
+}
